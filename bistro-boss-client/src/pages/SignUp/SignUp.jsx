@@ -3,8 +3,11 @@ import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../provider/AuthProvider";
+import useAxiosPublic from "../../hooks/useAxiosPublic";
+import toast from "react-hot-toast";
 
 const SignUp = () => {
+  const axiosPublic = useAxiosPublic();
   const {
     register,
     handleSubmit,
@@ -19,10 +22,22 @@ const SignUp = () => {
     createUser(data.email, data.password)
       .then((result) => {
         const user = result.user;
-        console.log(user);
-
-        updateUserProfile(data.name, data.photoURL);
-        navigate("/");
+        // console.log(user);
+        updateUserProfile(data.name, data.photoURL).then(() => {
+          // create user entry
+          const userInfo = {
+            name: data.name,
+            email: data.email,
+          };
+          // post userInfo to database
+          axiosPublic.post("/users", userInfo).then((res) => {
+            if (res.data.insertedId) {
+              // console.log("user added database",res.data)
+              navigate("/");
+              toast.success("You are registerd user");
+            }
+          });
+        });
       })
       .catch((err) => {
         // console.log(err);
